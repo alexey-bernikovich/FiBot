@@ -31,7 +31,7 @@ GEM
       equalizer (~> 0.0, >= 0.0.9)
     win32screenshot (2.1.0)
       ffi (~> 1.9.0)
-      mini_magick (~> 4.3.0)
+      mini_magick (>= 4.9.4)
       rautomation (~> 0.7)
 
 PLATFORMS
