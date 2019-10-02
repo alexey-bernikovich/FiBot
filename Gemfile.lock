@@ -15,7 +15,7 @@ GEM
     ffi (1.9.25-x64-mingw32)
     ice_nine (0.11.2)
     inflecto (0.0.2)
-    mini_magick (4.3.6)
+    mini_magick (4.9.5)
     multipart-post (2.1.1)
     rautomation (0.17.0)
       ffi (~> 1.9.0)
@@ -31,7 +31,7 @@ GEM
       equalizer (~> 0.0, >= 0.0.9)
     win32screenshot (2.1.0)
       ffi (~> 1.9.0)
-      mini_magick (>= 4.9.4)
+      mini_magick (>= 4.9.5)
       rautomation (~> 0.7)
 
 PLATFORMS
