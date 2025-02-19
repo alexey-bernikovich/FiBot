@@ -25,12 +25,13 @@ class BotController
     def handle_message(message)
         chat_id = message.from.id
         
+        @botUserService.create_user_if_not_exist(message)
+ 
         if @settings['debug_mode'] && !@permissionService.is_admin?(chat_id)
             @botResponseService.send_message(chat_id, ErrorMessages::MAINTENANCE_MODE)
             return
         end
 
-        @botUserService.create_user_if_not_exist(message)
         if @botUserService.user_is_blocked?(chat_id)
             @logHandler.log_info("User #{chat_id} is bloked")
             @botResponseService.send_message(chat_id, ErrorMessages::USER_IS_BLOCKED)
