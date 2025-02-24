@@ -1,3 +1,4 @@
 /data/*.png
 config/config.yml
 data/logs/*
+.vs/
