@@ -1,2 +1,4 @@
-/data/data.rb
 /data/*.png
+config/config.yml
+data/logs/*
+.vs/
