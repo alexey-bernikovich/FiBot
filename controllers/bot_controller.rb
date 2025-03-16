@@ -43,9 +43,13 @@ class BotController
             return
         end
 
-        if @botUserService.user_is_blocked?(user)
-            @logHandler.log_info("User #{chat_id} is bloked")
-            @botResponseService.send_message(chat_id, ErrorMessages::USER_IS_BLOCKED)
+        if user[DBFields::IS_BLOCKED]
+            @logHandler.log_info("User #{chat_id} is blocked")
+            if !user[DBFields::IS_SHADOW]
+                @botResponseService.send_message(chat_id, ErrorMessages::USER_IS_BLOCKED)
+            else
+                @logHandler.log_info("User #{chat_id} in the shadow block")
+            end
             return
         end
 
