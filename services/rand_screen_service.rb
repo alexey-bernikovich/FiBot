@@ -1,39 +1,38 @@
-require_relative '../models/rand_screen_model'
 require_relative '../data/constants'
 
 class RandScreenService
-    def initialize(logHandler, database, botResponseService, botUserService, permissionService)
+    def initialize(logHandler, randScreenRepository, botResponseService, botUserService, permissionService)
         @logHandler = logHandler
-        @randScreenModel = RandScreenModel.new(database)
+        @randScreenRepository = randScreenRepository
         @botResponseService = botResponseService
         @botUserService = botUserService
         @permissionService = permissionService
     end
 
-    def send_rand_screen(message)
-        chat_id = message.from.id
-        user_id = @botUserService.find_user(chat_id)[DBFields::ID]
-        first_name = message.from.first_name
+    def send_rand_screen(user)
+        chat_id = user[DBFields::TELEGRAM_CHAT_ID]
+        user_id = user[DBFields::ID]
+        first_name = user[DBFields::FIRST_NAME]
 
-        if !@permissionService.can_execute_command?(chat_id, DBConstValues::TRUSTED)
+        if !@permissionService.can_execute_command?(user, DBConstValues::TRUSTED)
             @logHandler.log_info("User (chat id: #{chat_id}) does not have sufficient permissions to get random screenshot")
             @botResponseService.send_message(chat_id, ErrorMessages::INSUFFICIENT_PERMISSIONS)
             return
         end
 
-        if viewed_all_screens?(user_id)
+        if viewed_all_screens?(user)
             @logHandler.log_info("User #{chat_id} (#{first_name}) viewed all Steam screens")
             @botResponseService.send_message(chat_id, ErrorMessages::VIEWED_ALL_SCREENS)
             return
         end
 
-        available_ids = @randScreenModel.get_available(user_id).shuffle
+        available_ids = @randScreenRepository.get_available(user_id).shuffle
         rand_id = rand(0..available_ids.length - 1)
         screen_id = available_ids[rand_id]
-        screen_path = @randScreenModel.get_screen_by_id(screen_id)[DBFields::PATH]
+        screen_path = @randScreenRepository.get_screen_by_id(screen_id)[DBFields::PATH]
 
         begin
-            game_name = @randScreenModel.get_steam_game_name(screen_id)
+            game_name = @randScreenRepository.get_steam_game_name(screen_id, screen_path)
             caption = "#{File.mtime(screen_path).strftime("%d/%m/%Y")}"
 
             if game_name != nil                
@@ -43,11 +42,11 @@ class RandScreenService
             end
             
             @botResponseService.send_image_with_caption(chat_id, screen_path, caption)            
-            @randScreenModel.save_path(user_id, screen_id)
+            @randScreenRepository.save_path(user_id, screen_id)
 
             @logHandler.log_info("Saved Steam-screen (id: #{screen_id}, path: #{screen_path}) for #{first_name}")
 
-            if !@permissionService.is_admin?(chat_id)
+            if !@permissionService.is_admin?(user)
                 @botResponseService.send_image_with_caption(@permissionService.admin_id, screen_path, "Rand Steam-screen for #{first_name}:")
             end
         rescue Exception => e
@@ -56,28 +55,29 @@ class RandScreenService
         end
     end
 
-    def viewed_all_screens?(user_id)
-        viewed = @randScreenModel.get_viewed_count(user_id)
-        count = @randScreenModel.get_screen_count
+    def viewed_all_screens?(user)
+        viewed = @randScreenRepository.get_viewed_count(user[DBFields::ID])
+        count = @randScreenRepository.get_screen_count
         return viewed == count
     end
 
-    def get_stat(user_id)
-        viewed = @randScreenModel.get_viewed_count(user_id)
-        count = @randScreenModel.get_screen_count
+    def get_stat(user)
+        viewed = @randScreenRepository.get_viewed_count(user[DBFields::ID])
+        count = @randScreenRepository.get_screen_count
         return count, viewed
     end
 
-    def reset(chat_id)
-        if !@permissionService.can_execute_command?(chat_id, DBConstValues::TRUSTED)
+    def reset(user)
+        chat_id = user[DBFields::TELEGRAM_CHAT_ID]
+        user_id = user[DBFields::ID]
+
+        if !@permissionService.can_execute_command?(user, DBConstValues::TRUSTED)
             @logHandler.log_info("User (chat id: #{chat_id}) does not have sufficient permissions to reset rand Steam-screens")
             @botResponseService.send_message(chat_id, ErrorMessages::INSUFFICIENT_PERMISSIONS)
             return
         end
 
-        user_id = @botUserService.find_user(chat_id)[DBFields::ID]
-        @randScreenModel.reset_user_save_path(user_id)
-
+        @randScreenRepository.reset_user_save_path(user_id)
         @logHandler.log_info("User id: #{user_id} reset all rand Steam-screenshots")
         @botResponseService.send_message(chat_id, SuccessMessages::RESET_RAND_SCREEN)
     end

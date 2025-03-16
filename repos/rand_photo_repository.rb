@@ -1,13 +1,14 @@
+require_relative 'base_repository'
 require_relative '../data/constants'
 
-class RandPhotoModel
-    def initialize(database)
-        @database = database
+class RandPhotoRepository < BaseRepository
+    def initialize(log_handler, database)
+        @log_handler = log_handler
+        @database = database        
     end
 
     def get_viewed_count(user_id)
-        result = @database.query("SELECT #{DBFuncNames::GET_VIEWED_COUNT}
-            (#{user_id}, #{DBConstValues::FILE_TYPE_PHOTO})")
+        result = @database.query("SELECT #{DBFuncNames::GET_VIEWED_COUNT} (#{user_id}, #{DBConstValues::FILE_TYPE_PHOTO})")
         return result.first[DBFuncNames::GET_VIEWED_COUNT].to_i
     end
 

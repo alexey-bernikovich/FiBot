@@ -5,8 +5,8 @@ class BotResponseService
         @bot = bot
     end
 
-	def start_message(chat_id, message)
-		send_message(chat_id, "#{InfoMessages::START_MESSAGE} #{message.from.first_name}!")
+	def start_message(user)
+		send_message(user[DBFields::TELEGRAM_CHAT_ID], "#{InfoMessages::START_MESSAGE} #{user[DBFields::FIRST_NAME]}!")
 	end
 
 	def send_message(chat_id, message)

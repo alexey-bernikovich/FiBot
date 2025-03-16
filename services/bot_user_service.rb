@@ -1,34 +1,26 @@
-require_relative '../models/bot_user_model'
-
 class BotUserService
-    def initialize(logHandler, database, botResponseService)
+    def initialize(logHandler, botUserRepository, botResponseService)
         @logHandler = logHandler
-        @botUserModel = BotUserModel.new(database)
+        @botUserRepository = botUserRepository
         @botResponseService = botResponseService
     end
 
-    def find_user(chat_id)
-        return @botUserModel.find_user(chat_id)
-    end
-
-    def get_user_role(chat_id)
-        return @botUserModel.get_user_role(chat_id)
-    end
-
-    def user_is_blocked?(chat_id)
-        return @botUserModel.user_is_blocked(chat_id)
-    end
-
-    def create_user_if_not_exist(message)
-        user = find_user(message.from.id)
+    def get_or_create_user(message)
+        user = @botUserRepository.get(message.from.id)
         if user == nil
-            create_user(message.from.id, message.from.first_name)
+            user = @botUserRepository.set(message.from.id, message.from.first_name)
+            if user != nil
+                @logHandler.log_info("Created a new user: id: #{user[DBFields::ID]}, name: #{user[DBFields::FIRST_NAME]}")
+            end
         end
+        return user
     end
 
-    def create_user(chat_id, first_name)
-        @botUserModel.create_user(chat_id, first_name)
-        created_user = @botUserModel.find_user(chat_id)
-        @logHandler.log_info("Created a new user: id#{created_user[DBFields::ID]}")
+    def get_user_role(user)
+        return user[DBFields::BOT_USER_ROLE_ID]
+    end
+
+    def user_is_blocked?(user)
+        return @botUserRepository.user_is_blocked?(user[DBFields::ID])
     end
 end

@@ -32,6 +32,11 @@ class DBConstValues
   FILE_TYPE_SCREEN = 2
 end
 
+class RedisDb
+  USER_DB = 0
+  GAME_NAME_DB = 1
+end
+
 class ErrorMessages
   MAINTENANCE_MODE = "Ведутся технические работы, бот временно недоступен"
   USER_IS_BLOCKED = "Вы заблокированы"  

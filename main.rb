@@ -11,7 +11,7 @@ logHandler = LogHandler.new(settings['log_file_path'])
 database = Database.new(config['database'])
 
 Telegram::Bot::Client.run(config['telegram']['token']) do |bot|	
-	botController = BotController.new(logHandler, settings, bot, database)
+	botController = BotController.new(logHandler, config, bot, database)
 	
 	if settings['debug_mode']
 		logHandler.log_debug("Launched in the debug mode")	
@@ -21,7 +21,7 @@ Telegram::Bot::Client.run(config['telegram']['token']) do |bot|
 
 	bot.listen do |message|
 		begin
-			logHandler.log_info("Resieved a message")
+			logHandler.log_info("Resieved a message: chat_id #{message.from.id}")
 			if message != nil
 				botController.handle_message(message)
 			else

@@ -1,13 +1,15 @@
+require_relative 'base_repository'
 require_relative '../data/constants'
 
-class RandScreenModel
-    def initialize(database)
+class RandScreenRepository < BaseRepository
+    def initialize(log_handler, database, redis_client)
+        @log_handler = log_handler
         @database = database
+        @redis_client = redis_client
     end
 
     def get_viewed_count(user_id)
-        result = @database.query("SELECT #{DBFuncNames::GET_VIEWED_COUNT}
-            (#{user_id}, #{DBConstValues::FILE_TYPE_SCREEN})")
+        result = @database.query("SELECT #{DBFuncNames::GET_VIEWED_COUNT}(#{user_id}, #{DBConstValues::FILE_TYPE_SCREEN})")
         return result.first[DBFuncNames::GET_VIEWED_COUNT].to_i
     end
 
@@ -34,9 +36,21 @@ class RandScreenModel
         return result
     end
 
-    def get_steam_game_name(path_id)
-        result = @database.query("SELECT #{DBFuncNames::GET_STEAM_GAME_NAME} (#{path_id})")
-        return result.first[DBFuncNames::GET_STEAM_GAME_NAME]
+    def get_steam_game_name(path_id, path)
+        app_id = get_app_id_from_path(path)      
+        game_name = @redis_client.get_object(app_id)
+        if game_name != nil
+            return game_name[DBFuncNames::GET_STEAM_GAME_NAME]
+        end
+
+        game_name = @database.query("SELECT #{DBFuncNames::GET_STEAM_GAME_NAME} (#{path_id})")
+        @redis_client.set_object(app_id, game_name.first[DBFuncNames::GET_STEAM_GAME_NAME])
+        return game_name.first[DBFuncNames::GET_STEAM_GAME_NAME]
+    end
+
+    def get_app_id_from_path(path)
+        match = path.match(/userdata\\(\d+)\\\d+\\remote\\(\d+)/)
+        return match ? match[2] : nil
     end
 
     def reset_user_save_path(user_id)
