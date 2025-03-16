@@ -12,11 +12,11 @@ class ScreenshotService
         @permissionService = permissionService        
     end
 
-    def send_desktop_screenshot(message, monitor_id)
-        chat_id = message.from.id
-        first_name = message.from.first_name
+    def send_desktop_screenshot(user, monitor_id)
+        chat_id = user[DBFields::TELEGRAM_CHAT_ID]
+        first_name = user[DBFields::FIRST_NAME]
 
-        if !@permissionService.can_execute_command?(chat_id, DBConstValues::TRUSTED)
+        if !@permissionService.can_execute_command?(user, DBConstValues::TRUSTED)
             @logHandler.log_info("User (chat id: #{chat_id}) does not have sufficient permissions to get desktop screenshot")
             @botResponseService.send_message(chat_id, ErrorMessages::INSUFFICIENT_PERMISSIONS)
             return
@@ -44,7 +44,7 @@ class ScreenshotService
             @logHandler.log_info("Sending a desktop screenshot (monitor id: #{monitor_id}) to #{chat_id}")
             @botResponseService.send_image_with_caption(chat_id, @screen_path, Time.now.strftime("%d/%m/%Y %H:%M"))
 
-            if !@permissionService.is_admin?(chat_id)
+            if !@permissionService.is_admin?(user)
                 @botResponseService.send_image_with_caption(@permissionService.admin_id, @screen_path, 
                     "Screen for #{first_name}:")
             end
@@ -55,8 +55,9 @@ class ScreenshotService
         id >= 0 && id <= @max_monitor_count
     end
 
-    def set_blur_mode(chat_id)
-        if @permissionService.can_execute_command?(chat_id, DBConstValues::ADMIN)
+    def set_blur_mode(user)
+        chat_id = user[DBFields::TELEGRAM_CHAT_ID]
+        if @permissionService.can_execute_command?(user, DBConstValues::ADMIN)
             @should_blur = !@should_blur
             blur_mode_str = @should_blur ? "ON" : "OFF"
             @logHandler.log_info("Set blut mode to:#{blur_mode_str}")
