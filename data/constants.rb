@@ -22,6 +22,8 @@ class DBFields
   PATH = "path"
   IS_CENSORED = "iscensored"
   FIRST_NAME = "firstname"
+  IS_SHADOW = "is_shadow"
+  IS_BLOCKED = "is_blocked"
 end
 
 class DBConstValues
